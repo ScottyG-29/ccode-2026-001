@@ -1,0 +1,10 @@
+node_modules/
+out/
+dist/
+.vscode-test/
+*.vsix
+*.js
+*.js.map
+*.d.ts
+!esbuild.mjs
+!.vscode/**/*.json

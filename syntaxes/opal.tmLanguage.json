@@ -1,0 +1,289 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "OPAL",
+  "scopeName": "source.opal",
+  "fileTypes": ["opal"],
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#strings" },
+    { "include": "#numbers" },
+    { "include": "#constants" },
+    { "include": "#operators" },
+    { "include": "#pipe" },
+    { "include": "#verbs" },
+    { "include": "#aggregate-functions" },
+    { "include": "#string-functions" },
+    { "include": "#time-functions" },
+    { "include": "#semistructured-functions" },
+    { "include": "#math-functions" },
+    { "include": "#network-functions" },
+    { "include": "#type-functions" },
+    { "include": "#window-functions" },
+    { "include": "#data-types" },
+    { "include": "#identifiers" },
+    { "include": "#punctuation" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.double-slash.opal",
+          "match": "//.*$"
+        },
+        {
+          "name": "comment.block.opal",
+          "begin": "/\\*",
+          "end": "\\*/"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.opal",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.opal",
+              "match": "\\\\."
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.single.opal",
+          "begin": "'",
+          "end": "'",
+          "patterns": [
+            {
+              "name": "constant.character.escape.opal",
+              "match": "\\\\."
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.backtick.opal",
+          "begin": "`",
+          "end": "`"
+        },
+        {
+          "name": "string.regexp.opal",
+          "begin": "/(?![/*])",
+          "end": "/[gimsuy]*",
+          "patterns": [
+            {
+              "name": "constant.character.escape.opal",
+              "match": "\\\\."
+            }
+          ]
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.float.opal",
+          "match": "\\b\\d+\\.\\d+([eE][+-]?\\d+)?\\b"
+        },
+        {
+          "name": "constant.numeric.integer.opal",
+          "match": "\\b\\d+([eE][+-]?\\d+)?\\b"
+        }
+      ]
+    },
+    "constants": {
+      "patterns": [
+        {
+          "name": "constant.language.boolean.opal",
+          "match": "\\b(true|false)\\b"
+        },
+        {
+          "name": "constant.language.null.opal",
+          "match": "\\b(null|FIELDS_NOT_PRESERVED)\\b"
+        },
+        {
+          "name": "constant.language.duration.opal",
+          "match": "\\b\\d+(ns|us|ms|s|m|h|d|w)\\b"
+        }
+      ]
+    },
+    "operators": {
+      "patterns": [
+        {
+          "name": "keyword.operator.comparison.opal",
+          "match": "(!=|<=|>=|<|>|=~|!~|=)"
+        },
+        {
+          "name": "keyword.operator.logical.opal",
+          "match": "\\b(and|or|not|in|not_in|contains|not_contains|starts_with|ends_with|matches|like|not_like)\\b"
+        },
+        {
+          "name": "keyword.operator.arithmetic.opal",
+          "match": "(\\+|-|\\*|/|%)"
+        },
+        {
+          "name": "keyword.operator.assignment.opal",
+          "match": ":"
+        }
+      ]
+    },
+    "pipe": {
+      "patterns": [
+        {
+          "name": "keyword.operator.pipe.opal",
+          "match": "\\|"
+        }
+      ]
+    },
+    "verbs": {
+      "patterns": [
+        {
+          "comment": "Filter verbs",
+          "name": "keyword.control.verb.filter.opal",
+          "match": "\\b(filter|filter_last|topk|bottomk|limit|ever|never|always|sample)\\b"
+        },
+        {
+          "comment": "Projection verbs",
+          "name": "keyword.control.verb.projection.opal",
+          "match": "\\b(make_col|pick_col|rename_col|drop_col|set_col|flatten|extract_regex|parse_json|parse_csv|parse_kvs|parse_url|parse_xml|parse_syslog)\\b"
+        },
+        {
+          "comment": "Aggregate verbs",
+          "name": "keyword.control.verb.aggregate.opal",
+          "match": "\\b(statsby|timechart|align|aggregate|rollup|histogram|pivot|unpivot|dedup|distinct|fill|merge_events|make_session|make_reference|bucketize|timestats)\\b"
+        },
+        {
+          "comment": "Join verbs",
+          "name": "keyword.control.verb.join.opal",
+          "match": "\\b(join|leftjoin|fulljoin|union|lookup|lookup_ip_info|exists|not_exists|follow|follow_not|surrounding|update_resource)\\b"
+        },
+        {
+          "comment": "Metadata verbs",
+          "name": "keyword.control.verb.metadata.opal",
+          "match": "\\b(set_label|set_link|set_valid_from|set_primary_key|set_col_visible|set_col_unit|set_col_enum|add_key|make_resource|make_event|interface|publish)\\b"
+        },
+        {
+          "comment": "Metrics verbs",
+          "name": "keyword.control.verb.metrics.opal",
+          "match": "\\b(interface_stats|delta|rate|gauge|cumulativeCounter|m_counter|m_sum|m_gauge|m_histogram|m_exponential_histogram)\\b"
+        },
+        {
+          "comment": "Flow / control verbs",
+          "name": "keyword.control.verb.flow.opal",
+          "match": "\\b(colshow|colhide|coltype|coldesc|colrename|order_by|sort)\\b"
+        }
+      ]
+    },
+    "aggregate-functions": {
+      "patterns": [
+        {
+          "name": "support.function.aggregate.opal",
+          "match": "\\b(count|count_distinct|count_distinct_approx|sum|avg|min|max|any_not_null|first|last|percentile|median|stddev|variance|string_agg|array_agg|group_by|moving_avg|rate_calculation|top_list|bottom_list)\\b(?=\\s*\\()"
+        }
+      ]
+    },
+    "string-functions": {
+      "patterns": [
+        {
+          "name": "support.function.string.opal",
+          "match": "\\b(concat|concat_strings|upper|lower|trim|ltrim|rtrim|length|strlen|substring|left|right|replace|reverse|split|split_part|regex_match|regex_extract|regex_replace|regex_extract_all|strpos|contains_str|starts_with_str|ends_with_str|repeat|lpad|rpad|to_string|base64_encode|base64_decode|url_encode|url_decode|md5|sha1|sha256)\\b(?=\\s*\\()"
+        }
+      ]
+    },
+    "time-functions": {
+      "patterns": [
+        {
+          "name": "support.function.time.opal",
+          "match": "\\b(parse_timestamp|format_time|from_seconds|from_milliseconds|from_microseconds|from_nanoseconds|to_seconds|to_milliseconds|now|ago|date_trunc|date_part|date_add|date_diff|extract_year|extract_month|extract_day|extract_hour|extract_minute|extract_second|extract_epoch|timestamp|duration|bin)\\b(?=\\s*\\()"
+        }
+      ]
+    },
+    "semistructured-functions": {
+      "patterns": [
+        {
+          "name": "support.function.semistructured.opal",
+          "match": "\\b(object|array|object_keys|array_length|array_contains|array_distinct|array_flatten|array_slice|array_sort|array_reverse|array_zip|array_map|array_filter|flatten_all|flatten_single|get_field|has_field|drop_fields|rename_fields|make_object|make_array|object_merge)\\b(?=\\s*\\()"
+        }
+      ]
+    },
+    "math-functions": {
+      "patterns": [
+        {
+          "name": "support.function.math.opal",
+          "match": "\\b(abs|ceil|floor|round|pow|sqrt|log|log2|log10|exp|sign|mod|greatest|least|random|pi|infinity|nan|is_nan|is_infinite|is_finite|clamp)\\b(?=\\s*\\()"
+        }
+      ]
+    },
+    "network-functions": {
+      "patterns": [
+        {
+          "name": "support.function.network.opal",
+          "match": "\\b(ip_is_private|ip_is_loopback|ip_is_multicast|ip_network|ip_to_int|int_to_ip|cidr_match|parse_ip|ip_version)\\b(?=\\s*\\()"
+        }
+      ]
+    },
+    "type-functions": {
+      "patterns": [
+        {
+          "name": "support.function.type.opal",
+          "match": "\\b(typeof|is_null|is_not_null|coalesce|if_null|null_if|cast|to_int|to_float|to_bool|to_timestamp|to_duration|try_parse_json|try_int|try_float)\\b(?=\\s*\\()"
+        }
+      ]
+    },
+    "window-functions": {
+      "patterns": [
+        {
+          "name": "support.function.window.opal",
+          "match": "\\b(row_number|rank|dense_rank|lag|lead|ntile|cumulative_sum|cumulative_count)\\b(?=\\s*\\()"
+        }
+      ]
+    },
+    "data-types": {
+      "patterns": [
+        {
+          "name": "support.type.opal",
+          "match": "\\b(string|int64|float64|bool|timestamp|duration|object|array|variant|null)\\b"
+        }
+      ]
+    },
+    "identifiers": {
+      "patterns": [
+        {
+          "comment": "Dataset reference with @",
+          "name": "entity.name.tag.dataset.opal",
+          "match": "@[A-Za-z_][A-Za-z0-9_.-]*"
+        },
+        {
+          "comment": "Label reference with ^",
+          "name": "entity.name.tag.label.opal",
+          "match": "\\^[A-Za-z_][A-Za-z0-9_]*"
+        },
+        {
+          "comment": "Column name after make_col, pick_col etc. (before colon)",
+          "name": "variable.other.column.opal",
+          "match": "\\b[A-Za-z_][A-Za-z0-9_]*(?=\\s*:(?!:))"
+        }
+      ]
+    },
+    "punctuation": {
+      "patterns": [
+        {
+          "name": "punctuation.separator.comma.opal",
+          "match": ","
+        },
+        {
+          "name": "punctuation.bracket.round.opal",
+          "match": "[()]"
+        },
+        {
+          "name": "punctuation.bracket.square.opal",
+          "match": "[\\[\\]]"
+        },
+        {
+          "name": "punctuation.bracket.curly.opal",
+          "match": "[{}]"
+        }
+      ]
+    }
+  }
+}

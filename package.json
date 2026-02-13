@@ -1,0 +1,190 @@
+{
+  "name": "observe-opal",
+  "displayName": "Observe OPAL",
+  "description": "Full language support for Observe's OPAL (Observe Processing and Analysis Language) — syntax highlighting, IntelliSense, snippets, and live query execution.",
+  "version": "0.1.0",
+  "publisher": "observe-opal",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Snippets",
+    "Linters"
+  ],
+  "keywords": [
+    "opal",
+    "observe",
+    "siem",
+    "observability",
+    "query language"
+  ],
+  "activationEvents": [
+    "onLanguage:opal"
+  ],
+  "main": "./dist/client/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "opal",
+        "aliases": [
+          "OPAL",
+          "opal",
+          "Observe OPAL"
+        ],
+        "extensions": [
+          ".opal"
+        ],
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./icons/opal-light.png",
+          "dark": "./icons/opal-dark.png"
+        }
+      }
+    ],
+    "grammars": [
+      {
+        "language": "opal",
+        "scopeName": "source.opal",
+        "path": "./syntaxes/opal.tmLanguage.json"
+      },
+      {
+        "scopeName": "markdown.opal.codeblock",
+        "path": "./syntaxes/opal-markdown-injection.tmLanguage.json",
+        "injectTo": [
+          "text.html.markdown"
+        ],
+        "embeddedLanguages": {
+          "meta.embedded.block.opal": "opal"
+        }
+      }
+    ],
+    "snippets": [
+      {
+        "language": "opal",
+        "path": "./snippets/opal.json"
+      }
+    ],
+    "configuration": {
+      "title": "Observe OPAL",
+      "properties": {
+        "observeOpal.observe.customerUrl": {
+          "type": "string",
+          "default": "",
+          "description": "Your Observe customer URL (e.g., https://<tenant>.observeinc.com)"
+        },
+        "observeOpal.observe.apiToken": {
+          "type": "string",
+          "default": "",
+          "description": "Bearer token for Observe API authentication. Store securely using VS Code's secrets API."
+        },
+        "observeOpal.observe.defaultDatasetId": {
+          "type": "string",
+          "default": "",
+          "description": "Default dataset ID to use as pipeline input when running OPAL queries."
+        },
+        "observeOpal.observe.defaultInterval": {
+          "type": "string",
+          "default": "1h",
+          "description": "Default time interval for OPAL queries (e.g., 1h, 15m, 1d)."
+        },
+        "observeOpal.diagnostics.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable real-time OPAL diagnostics and validation."
+        },
+        "observeOpal.completion.autoTrigger": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically trigger completions after typing verbs and pipe operators."
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "observeOpal.runQuery",
+        "title": "Run OPAL Query",
+        "category": "Observe OPAL",
+        "icon": "$(play)"
+      },
+      {
+        "command": "observeOpal.runSelection",
+        "title": "Run Selected OPAL",
+        "category": "Observe OPAL",
+        "icon": "$(play)"
+      },
+      {
+        "command": "observeOpal.setApiToken",
+        "title": "Set Observe API Token",
+        "category": "Observe OPAL",
+        "icon": "$(key)"
+      },
+      {
+        "command": "observeOpal.browseDatasets",
+        "title": "Browse Observe Datasets",
+        "category": "Observe OPAL",
+        "icon": "$(database)"
+      },
+      {
+        "command": "observeOpal.openDocs",
+        "title": "Open OPAL Documentation",
+        "category": "Observe OPAL",
+        "icon": "$(book)"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "when": "editorLangId == opal",
+          "command": "observeOpal.runQuery",
+          "group": "navigation"
+        }
+      ],
+      "editor/context": [
+        {
+          "when": "editorLangId == opal && editorHasSelection",
+          "command": "observeOpal.runSelection",
+          "group": "observe"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "observeOpal.runQuery",
+        "key": "ctrl+shift+enter",
+        "mac": "cmd+shift+enter",
+        "when": "editorLangId == opal"
+      },
+      {
+        "command": "observeOpal.runSelection",
+        "key": "ctrl+enter",
+        "mac": "cmd+enter",
+        "when": "editorLangId == opal && editorHasSelection"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "build": "node esbuild.mjs --production",
+    "watch": "node esbuild.mjs --watch",
+    "lint": "eslint client/src server/src --ext ts",
+    "test": "node ./out/test/runTest.js",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "esbuild": "^0.20.0",
+    "eslint": "^8.56.0",
+    "typescript": "^5.3.0",
+    "@vscode/vsce": "^2.22.0"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1",
+    "vscode-languageserver": "^9.0.1",
+    "vscode-languageserver-textdocument": "^1.0.11"
+  }
+}
