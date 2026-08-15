@@ -19,11 +19,13 @@ import json
 import time
 import traceback
 from datetime import datetime, timezone
+from functools import wraps
 from concurrent.futures import ThreadPoolExecutor
 
 import requests
 from dotenv import load_dotenv
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, session, redirect, url_for
+from werkzeug.security import check_password_hash
 
 import anthropic
 
@@ -41,12 +43,89 @@ SECOND_API_KEY = os.environ.get("SECOND_API_KEY", "")
 SECOND_API_MODEL = os.environ.get("SECOND_API_MODEL", "")
 SECOND_API_LABEL = os.environ.get("SECOND_API_LABEL", "Second API")
 
+# The app password is stored as a hash (generated with generate_password_hash.py),
+# never as plain text — so it stays safe even if the .env file or a Fly secret
+# ever leaks in a log or screenshot.
+APP_PASSWORD_HASH = os.environ.get("APP_PASSWORD_HASH", "")
+
 LOG_PATH = os.path.join(os.path.dirname(__file__), "logs", "comparisons.jsonl")
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-key-change-me")
 
+# Harden the session cookie: JS can't read it, it's only sent over HTTPS
+# (Fly.io terminates TLS for us), and it isn't sent on cross-site requests.
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax",
+    SESSION_COOKIE_SECURE=os.environ.get("FLASK_ENV") != "development",
+)
+
 anthropic_client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY) if ANTHROPIC_API_KEY else None
+
+
+# ---------------------------------------------------------------------------
+# Password protection
+# A single shared password gates the whole app (this is a personal tool for
+# one user, not a multi-account system). Failed attempts are throttled
+# per-IP in memory to slow down brute-force guessing.
+# ---------------------------------------------------------------------------
+
+_failed_attempts: dict[str, list[float]] = {}
+MAX_ATTEMPTS = 5
+LOCKOUT_WINDOW_SECONDS = 300  # 5 minutes
+
+
+def _is_locked_out(ip: str) -> bool:
+    now = time.monotonic()
+    attempts = [t for t in _failed_attempts.get(ip, []) if now - t < LOCKOUT_WINDOW_SECONDS]
+    _failed_attempts[ip] = attempts
+    return len(attempts) >= MAX_ATTEMPTS
+
+
+def _record_failed_attempt(ip: str) -> None:
+    _failed_attempts.setdefault(ip, []).append(time.monotonic())
+
+
+def login_required(view):
+    """Decorator: redirect to /login unless the session is authenticated."""
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        if not session.get("authenticated"):
+            return redirect(url_for("login", next=request.path))
+        return view(*args, **kwargs)
+    return wrapped
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if not APP_PASSWORD_HASH:
+        return "APP_PASSWORD_HASH is not configured on the server.", 500
+
+    error = None
+    if request.method == "POST":
+        client_ip = request.remote_addr or "unknown"
+
+        if _is_locked_out(client_ip):
+            error = "Too many failed attempts. Try again in a few minutes."
+        else:
+            submitted = request.form.get("password", "")
+            if check_password_hash(APP_PASSWORD_HASH, submitted):
+                session.clear()
+                session["authenticated"] = True
+                session.permanent = True
+                next_path = request.args.get("next") or url_for("index")
+                return redirect(next_path)
+            _record_failed_attempt(client_ip)
+            error = "Incorrect password."
+
+    return render_template("login.html", error=error)
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
 
 
 # ---------------------------------------------------------------------------
@@ -140,6 +219,7 @@ def log_comparison(query: str, result_a: dict, result_b: dict) -> None:
 # ---------------------------------------------------------------------------
 
 @app.route("/", methods=["GET", "POST"])
+@login_required
 def index():
     result_a = result_b = None
     query = ""
@@ -184,5 +264,8 @@ def index():
 
 
 if __name__ == "__main__":
+    # 127.0.0.1 for local development; the Docker/Fly.io deploy overrides
+    # this entirely by running gunicorn directly (see Dockerfile).
     port = int(os.environ.get("FLASK_PORT", 5000))
-    app.run(host="127.0.0.1", port=port, debug=True)
+    debug_mode = os.environ.get("FLASK_ENV") == "development"
+    app.run(host="127.0.0.1", port=port, debug=debug_mode)
